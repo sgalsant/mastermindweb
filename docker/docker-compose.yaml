@@ -1,0 +1,45 @@
+version: "3.3"
+services:
+  tomcat:
+    image: tomcat:8.0-jre8
+    environment:
+      JPDA_ADDRESS: 8000
+      JDPA_TRANSPORT: dt_socket
+    volumes:
+      - ../target/mastermind-1.0.war:/usr/local/tomcat/webapps/myapp.war:z
+      - ../target/mastermind-1.0:/usr/local/tomcat/webapps/myapp:z
+      - ./tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml:z
+      - ./tomcat-context.xml:/usr/local/tomcat/webapps/manager/META-INF/context.xml:z
+    ports:
+      - 8080:8080
+      - 8000:8000
+    links:
+      - mysql
+    command: /usr/local/tomcat/bin/catalina.sh jpda run
+    restart: always
+
+  mysql:
+    image: mysql:5.7  #https://hub.docker.com/_/mysql
+    environment:
+      MYSQL_DATABASE: app # esta base de datos será creada al inicio del contenedor
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - 3306:3306
+    restart: always
+    volumes:
+      - dbdata:/var/lib/mysql:z   #carpeta en donde se guarda la base de datos
+      - ../sql:/docker-entrypoint-initdb.d:z  #ejecutará automáticamente los scripts sql que existan en esta carpeta
+
+  adminer:
+    #indica en la página de login, localhost: mysql
+    image: adminer
+    restart: always
+    ports:
+      - 8888:8080
+    links:
+      - mysql
+
+volumes:
+  dbdata:
